@@ -2,9 +2,9 @@ import "server-only";
 import { z } from "zod";
 
 /**
- * Server environment. Kept intentionally tiny: everything else (Meta app credentials,
- * Instagram tokens, n8n API keys) is configured in-app on the Settings page and stored
- * encrypted in the database.
+ * Server environment. Most app settings live in the database; META_APP_SECRET can be supplied
+ * as a server-only environment variable for Unified Login (the encrypted Settings value remains
+ * a backwards-compatible fallback). Instagram tokens and n8n API keys stay encrypted in the DB.
  *
  * DATABASE_URL falls back to the variables injected by the Vercel <-> Supabase integration.
  */
@@ -12,6 +12,11 @@ const schema = z.object({
   DATABASE_URL: z.string().url(),
   /** >= 32 chars. Used to derive the session-signing key and the secrets-encryption key. */
   APP_SECRET: z.string().min(32, "APP_SECRET must be at least 32 characters"),
+  /** Meta app secret for Unified Login. Empty placeholders are treated as unset. */
+  META_APP_SECRET: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().min(16).max(128).optional(),
+  ),
   /** Public base URL, e.g. https://autodm.example.com. Falls back to Vercel's production URL. */
   APP_URL: z.string().url().optional(),
   /** First-run credentials. The account is forced to change the password on first login. */

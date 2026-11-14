@@ -1,4 +1,5 @@
 import "server-only";
+import { env } from "@/env";
 import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { DEFAULT_TIME_ZONE, isValidTimeZone } from "@/lib/timezone";
@@ -10,19 +11,19 @@ import {
 } from "@/lib/validation/settings";
 import { decrypt, encrypt, randomToken } from "./crypto";
 import { db, withDbRetry } from "./db/client";
-import { settings } from "./db/schema";
+import { appSettings, settings } from "./db/schema";
 
 /**
  * Typed registry of in-app settings. Add new settings here; `secret: true` values are
  * encrypted at rest and never sent to the browser (use `getPublicSettings` for UI).
  */
 export const SETTINGS = {
-  /** Instagram app (Meta developer dashboard -> Instagram -> API setup with Instagram login). */
+  /** Legacy Instagram Login App ID; retained only to read older stored settings, not used by Unified Login. */
   "meta.appId": { schema: z.string().regex(/^\d{5,25}$/, "Must be a numeric app id"), secret: false },
   "meta.appSecret": { schema: z.string().min(16).max(128), secret: true },
   /** Token Meta echoes back when verifying the webhook subscription. Auto-generated. */
   "webhook.verifyToken": { schema: z.string().min(16).max(128), secret: true },
-  /** Result of the last `POST /me/subscribed_apps` (Connect or "Re-subscribe webhooks"). Diagnostics only. */
+  /** Result of the last `POST /{ig-user-id}/subscribed_apps` (Connect or "Re-subscribe webhooks"). Diagnostics only. */
   "webhook.subscription": {
     schema: z.object({
       ok: z.boolean(),
@@ -67,6 +68,42 @@ function decode<K extends SettingKey>(key: K, raw: unknown): SettingValue<K> | u
   const value = "enc" in stored ? JSON.parse(decrypt(stored.enc)) : stored.v;
   const parsed = SETTINGS[key].schema.safeParse(value);
   return parsed.success ? (parsed.data as SettingValue<K>) : undefined;
+}
+
+/** Public identifiers used by the server-side Meta Unified Login flow. */
+export interface MetaAppSettings {
+  metaAppId: string;
+  metaConfigId: string;
+}
+
+/** Uses the server environment first and the encrypted legacy Settings value as a fallback. */
+export async function getMetaAppSecret(): Promise<string | undefined> {
+  return env().META_APP_SECRET ?? (await getSetting("meta.appSecret"));
+}
+
+export async function getMetaAppSettings(): Promise<MetaAppSettings> {
+  const [row] = await withDbRetry(
+    () => db.select().from(appSettings).where(eq(appSettings.id, 1)).limit(1),
+    { label: "settings.getMetaAppSettings" },
+  );
+  return {
+    metaAppId: row?.metaAppId ?? "",
+    metaConfigId: row?.metaConfigId ?? "",
+  };
+}
+
+export async function setMetaAppSettings(value: MetaAppSettings): Promise<void> {
+  await withDbRetry(
+    () =>
+      db
+        .insert(appSettings)
+        .values({ id: 1, metaAppId: value.metaAppId, metaConfigId: value.metaConfigId })
+        .onConflictDoUpdate({
+          target: appSettings.id,
+          set: { metaAppId: value.metaAppId, metaConfigId: value.metaConfigId },
+        }),
+    { label: "settings.setMetaAppSettings" },
+  );
 }
 
 export async function getSetting<K extends SettingKey>(key: K): Promise<SettingValue<K> | undefined> {

@@ -12,7 +12,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Starts "Connect Instagram": sets a signed CSRF state cookie and redirects to Instagram. */
+/** Starts "Connect Instagram": sets a signed CSRF state cookie and redirects to Meta Unified Login. */
 export async function GET() {
   await requireUser();
   const { state, cookieValue } = createOAuthState();
@@ -28,7 +28,7 @@ export async function GET() {
   res.cookies.set(OAUTH_STATE_COOKIE, cookieValue, {
     httpOnly: true,
     secure: appUrl().startsWith("https://"),
-    // Lax: the cookie must accompany the top-level GET redirect back from instagram.com.
+    // Lax: the cookie must accompany the top-level GET redirect back from facebook.com.
     sameSite: "lax",
     path: "/api/instagram/oauth",
     maxAge: OAUTH_STATE_MAX_AGE_S,

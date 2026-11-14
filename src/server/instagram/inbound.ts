@@ -1,6 +1,6 @@
 import "server-only";
 import { AppError } from "@/server/errors";
-import { ensureVerifyToken, getSetting } from "@/server/settings";
+import { ensureVerifyToken, getMetaAppSecret } from "@/server/settings";
 import { noStore } from "./http";
 import {
   checkVerifyRequest,
@@ -62,7 +62,7 @@ export async function readRawBody(req: Request): Promise<string | null> {
 export async function authenticateWebhook(req: Request): Promise<AuthenticatedWebhook> {
   const raw = await readRawBody(req);
   if (raw === null) throw new WebhookRejectedError("too_large", "VALIDATION", "Payload too large");
-  const appSecret = await getSetting("meta.appSecret");
+  const appSecret = await getMetaAppSecret();
   if (!appSecret) {
     throw new WebhookRejectedError(
       "not_configured",
