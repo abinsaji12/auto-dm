@@ -50,7 +50,9 @@ kamu tulis di dashboard. Tidak ada biaya per kontak; batasannya dari Meta (lihat
 | `APP_SECRET`                          | Kamu generate (`openssl rand -base64 48`)               | Vercel → Environment Variables                | Wajib. **Simpan baik-baik**, jangan diganti             |
 | `CRON_SECRET`                         | Kamu generate (`openssl rand -hex 32`)                  | Vercel → Environment Variables                | Wajib di production (refresh token harian)              |
 | `ADMIN_DEFAULT_PASSWORD`              | Kamu tentukan (opsional)                                | Vercel → Environment Variables                | Default `changeme123`, wajib diganti saat login pertama |
-| Instagram **App ID** & **App Secret** | Meta → Instagram → API setup with Unified Login       | **Dashboard app → Settings → Instagram**      | Bukan di Vercel. Secret disimpan terenkripsi            |
+| **Meta App ID** & **Meta App Secret** | Meta → **App settings → Basic**                       | **Dashboard app → Settings → Instagram**      | ID umum milik Meta app; secret disimpan terenkripsi     |
+| **Unified Login Config ID**             | Facebook Login for Business → **Configurations**    | **Dashboard app → Settings → Instagram**      | `config_id`; bukan diisi sebagai environment variable  |
+| `META_APP_SECRET` (opsional)            | Meta → **App settings → Basic**                       | Vercel → Environment Variables                | Server-only; menggantikan secret fallback dari UI      |
 | **Verify token** webhook              | Dibuat otomatis oleh app                                | Disalin dari **Settings → Instagram** ke Meta | —                                                       |
 | **API key n8n** (`ard_…`)             | **Settings → n8n → Create key**                         | Credential "Header Auth" di n8n               | Hanya untuk mode n8n                                    |
 
@@ -232,8 +234,7 @@ AutoDM menukar authorization code di server, lalu membaca `/me/assigned_instagra
      sekali. Detail teknis: [meta-setup.md](meta-setup.md).
    - **Once per user**: ON (satu orang hanya dapat DM sekali per aturan).
 3. Pakai kotak **Test a comment** untuk simulasi (tidak mengirim apa pun).
-4. Tes sungguhan: komentar `DRIVE` dari **akun lain yang sudah jadi Instagram Tester** (selama app
-   masih Development mode). Lihat hasilnya di **Activity** dan **Analytics**.
+4. Tes sungguhan: komentar `DRIVE` dari **akun Instagram kedua**. Selama app masih Development mode, pastikan akun Meta yang mengotorisasi AutoDM memiliki app role dan akses ke Business Portfolio/asset yang dibagikan; terima invitation tester jika Meta menampilkannya. Lihat hasilnya di **Activity** dan **Analytics**.
 
    Butuh datanya di spreadsheet? Klik **Download CSV** di halaman **Activity** (mengikuti filter yang
    sedang aktif) atau **Analytics** (mengikuti rentang tanggal). File berformat UTF-8 (bisa langsung
@@ -274,8 +275,7 @@ Agar komentar **publik** diproses:
    - **Terms of Service URL** (opsional, disarankan): `https://<app>/terms`
    - **User data deletion** → pilih **Data deletion instructions URL** → `https://<app>/data-deletion`
    - lengkapi juga ikon app (1024x1024) dan kategori → **Save changes**.
-3. Di Meta → **Instagram → API setup with Unified Login → 3. Set up Instagram business login →
-   Business login settings**:
+3. Di Meta → **Facebook Login for Business / Unified Login settings** (atau pengaturan callback pada use case Instagram):
    - **Deauthorize callback URL**: `https://<app>/api/instagram/deauthorize` (dipanggil saat
      seseorang menghapus app; kalau itu akun yang terhubung, token-nya dihapus dan akun diputus).
    - **Data deletion request URL**: `https://<app>/api/instagram/data-deletion` (dipanggil saat
@@ -283,7 +283,7 @@ Agar komentar **publik** diproses:
      serta profilnya, langsung dihapus dan Meta menerima kode konfirmasi yang statusnya bisa dicek di
      `https://<app>/data-deletion?code=...`).
    - **Save**. Kedua callback memverifikasi `signed_request` dari Meta dengan App Secret, jadi App
-     Secret harus sudah tersimpan di Settings → Instagram.
+     Meta App Secret harus sudah tersimpan di Settings → Instagram.
 
    **Menangani permintaan hapus data lewat email dari komentator.** Orang yang hanya berkomentar
    tidak pernah login ke app, jadi Meta tidak mengirim callback untuk mereka; halaman publik
@@ -365,7 +365,7 @@ mengubah body request. Detail & troubleshooting: [n8n.md](n8n.md).
 - [ ] `/api/health` → `ok`
 - [ ] Login & password sudah diganti
 - [ ] IG Professional + "Allow access to messages" ON
-- [ ] App ID + App Secret tersimpan, redirect URI ditambahkan
+- [ ] Meta App ID + Meta App Secret + Unified Login Config ID tersimpan, redirect URI ditambahkan
 - [ ] Connect Instagram berhasil
 - [ ] Webhook verified + `comments` subscribed
 - [ ] Campaign + rule aktif, "Test a comment" cocok
@@ -402,8 +402,7 @@ terakhir, dan hasil subscribe webhook terakhir.
 - **Activity: `Skipped · Own comment`**: kamu berkomentar memakai akun yang terhubung. Komentar akun
   sendiri tidak pernah dibalas (mencegah loop). Tes dari **akun kedua**.
 - **Tidak ada baris di Activity dan tidak ada webhook delivery**: Meta tidak mengirim apa pun.
-  Biasanya app masih **Development mode** dan akun pengomentar belum menjadi **Instagram Tester**
-  yang sudah menerima undangan, atau field `comments` belum di-subscribe.
+  Biasanya app masih **Development mode** dan akun Meta yang mengotorisasi belum memiliki app role/akses ke Business Portfolio serta asset Instagram yang dibagikan, atau field `comments` belum di-subscribe.
 - **Delivery `Signature invalid`**: App Secret di Settings bukan **Meta App Secret** dari app
   yang mengirim webhook (ambil dari Meta → App settings → Basic).
 - **Delivery `Accepted` tetapi Account: `Other account`**: Meta mengirim komentar untuk akun Instagram
@@ -419,9 +418,7 @@ Checklist kalau tidak ada yang masuk:
 2. **Verify and save** berhasil (diagnostics menampilkan verifikasi terakhir _Verified_).
 3. Field `comments` di-subscribe di Meta, dan **Account subscription** _Subscribed_.
 4. Berkomentar dari **akun kedua**, bukan akun yang terhubung.
-5. Selama **Development mode**, akun kedua itu ditambahkan di **App roles → Roles → Instagram
-   Testers** dan undangannya **sudah diterima** di Instagram (Settings → Apps and websites → Tester
-   invites).
+5. Selama **Development mode**, akun Meta yang mengotorisasi AutoDM harus memiliki app role dan akses ke Business Portfolio serta asset Instagram yang dibagikan dalam konfigurasi. Terima invitation tester apa pun yang secara eksplisit ditampilkan Meta.
 6. Agar semua orang dilayani: app **Live** + Advanced Access (lihat bagian 10).
 7. Akun yang terhubung **publik** dan bertipe Business/Creator.
 
@@ -435,7 +432,7 @@ Checklist kalau tidak ada yang masuk:
 | Activity: `skipped · already_delivered`    | "Once per user" aktif dan orang itu sudah pernah dapat DM                                                                                                                                                                        |
 | DM gagal kode `551`                        | Pengguna tidak bisa menerima pesan (privasi) – bukan error app                                                                                                                                                                   |
 | DM gagal kode `10` / `200`                 | Izin kurang atau app belum Live/Advanced Access                                                                                                                                                                                  |
-| Token kedaluwarsa                          | Masa berlaku mengikuti konfigurasi Unified Login; token tanpa expiry tidak perlu refresh. Untuk token expiring, cek `CRON_SECRET` dan cron; reconnect bila token sudah dicabut/kedaluwarsa                                                                                                                                                                  |
+| Token kedaluwarsa                          | Masa berlaku mengikuti konfigurasi Unified Login; token tanpa expiry tidak perlu refresh. Untuk token expiring, cek `CRON_SECRET` dan cron; reconnect bila token sudah dicabut/kedaluwarsa |
 | Tombol "Saya sudah follow" tidak merespons | Aktifkan field **`messaging_postbacks`** di Meta App Dashboard → Webhooks, lalu klik **Settings → Instagram → Re-subscribe webhooks** sekali (wajib untuk akun yang terhubung sebelum fitur follow gate). Fitur lain tetap jalan |
 
 Log aplikasi (format JSON) ada di **Vercel → Project → Logs**; cari `scope` seperti `webhook`,

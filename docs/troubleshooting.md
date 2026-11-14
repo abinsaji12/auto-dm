@@ -97,7 +97,7 @@ verification handshake, and the result of the last webhook subscription.
 | What you see                                                        | Meaning and fix                                                                                                                                                                                     |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Activity row **Skipped · Own comment**                              | You commented with the connected account. Its comments are never answered (loop protection). Test from a **second account**.                                                                        |
-| **No row in Activity** and **no webhook deliveries** in diagnostics | Meta isn't sending anything. Usually the app is in **Development mode** and the commenter isn't an accepted **Instagram Tester**, or `comments` isn't subscribed. Work through the checklist below. |
+| **No row in Activity** and **no webhook deliveries** in diagnostics | Meta isn't sending anything. Usually the app is in **Development mode** and the authorizing/test accounts do not have the roles or business-asset access Meta requires, or `comments` isn't subscribed. Work through the checklist below. |
 | Deliveries with **Signature invalid**                               | The Meta App Secret in Settings does not belong to the same Meta app that sends the webhook. Use the general App Secret from **App settings → Basic** (not an old Instagram-specific secret).        |
 | Deliveries with **Not configured**                                  | No App Secret is saved yet. Add it in Settings → Instagram → Meta app.                                                                                                                              |
 | Deliveries **Accepted** but **Account: Other account**              | Meta sent the comment for a different Instagram account id (the dashboard's **Test** button sends a sample like this). Reconnect the account the post belongs to.                                   |
@@ -112,11 +112,9 @@ Checklist when nothing arrives:
 3. The `comments` field is subscribed in the Meta dashboard, and **Account subscription** says
    _Subscribed_ (use **Re-subscribe webhooks** if not).
 4. You comment from a **second account**, never the connected one.
-5. In **Development mode** that second account is added under **App roles → Roles → Instagram
-   Testers** and has **accepted** the invite in Instagram (Settings → Apps and websites → Tester
-   invites). Without that, Meta sends nothing.
+5. In **Development mode**, make sure the authorizing Meta user has an app role and access to the Business Portfolio and the Instagram asset shared with the Unified Login configuration. Accept any tester invitation that Meta explicitly presents.
 6. To answer everyone else, the app must be **Live**, with Advanced Access for the comments
-   permission ([meta-setup](meta-setup.md#part-8---development-vs-live-mode-important)).
+   permission ([meta-setup](meta-setup.md#part-8---development-mode-live-mode-and-app-review)).
 7. The connected account is **public** and a Business or Creator account.
 
 ## A comment matched the keyword but got no reply or DM
@@ -162,8 +160,8 @@ Group by `media_id` to spot a second id for the same reel: `select media_id, ski
 
 ## Webhook does not fire (no rows in Activity)
 
-1. **App mode**: in Development mode only app-role users trigger webhooks. Switch to **Live** ([meta-setup](meta-setup.md#part-8---development-vs-live-mode-important)).
-2. **Tester**: commenting account must be a tester (in Development) and your IG account must have accepted the invite.
+1. **App mode**: in Development mode only app-role users trigger webhooks. Switch to **Live** ([meta-setup](meta-setup.md#part-8---development-mode-live-mode-and-app-review)).
+2. **Development-mode access**: the Meta user authorizing AutoDM must have an app role and access to the Business Portfolio and the Instagram asset shared with the configuration. Any tester invitation shown by Meta must be accepted.
 3. **Subscription**: `comments` field subscribed in the dashboard **and** the account subscribed (reconnect Instagram).
 4. **Advanced Access / App Review**: if Live mode still delivers nothing for public commenters, request Advanced Access for the comments permission (⚠ unconfirmed requirement).
 5. The post's account must be a professional account; own comments never trigger replies.

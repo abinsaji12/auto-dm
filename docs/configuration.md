@@ -10,7 +10,8 @@
 | `APP_URL`                | no       | Vercel production domain     | OAuth redirect, webhook URL display, and SEO (canonical, Open Graph, sitemap, robots) |
 | `ADMIN_DEFAULT_USERNAME` | no       | `admin`                      | First run only                                                                        |
 | `ADMIN_DEFAULT_PASSWORD` | no       | `changeme123`                | Forced change at first login                                                          |
-| `CRON_SECRET`            | no       | -                            | Protects `/api/cron/*`                                                                |\n| `META_APP_SECRET`        | no       | -                            | Optional server-only Meta App Secret; takes precedence over the encrypted Settings fallback |
+| `CRON_SECRET`            | no       | -                            | Protects `/api/cron/*`                                                                |
+| `META_APP_SECRET`        | no       | -                            | Optional server-only Meta App Secret; takes precedence over the encrypted Settings fallback |
 | `LOG_LEVEL`              | no       | `info` (`debug` in dev)      | `debug`, `info`, `warn` or `error`                                                    |
 
 Generate secrets: `openssl rand -base64 48`.

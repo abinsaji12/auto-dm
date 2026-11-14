@@ -177,6 +177,7 @@ Only two variables are required. Meta App ID and Unified Login Config ID are ent
 | `APP_URL`                                           | no       | Public URL. Defaults to the Vercel production domain.                                                             |
 | `ADMIN_DEFAULT_USERNAME` / `ADMIN_DEFAULT_PASSWORD` | no       | First-run login (`admin` / `changeme123`); must be changed on first login.                                        |
 | `CRON_SECRET`                                       | no       | Protects `/api/cron/*`; Vercel sends it automatically.                                                            |
+| `META_APP_SECRET`                                   | no       | Optional server-only Meta App Secret; takes precedence over the encrypted Settings fallback.                    |
 
 Full reference: [docs/configuration.md](docs/configuration.md).
 
