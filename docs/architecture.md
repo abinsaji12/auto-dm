@@ -24,6 +24,7 @@ erDiagram
   users { uuid id PK; text username UK; text password_hash; bool must_change_password; int session_version }
   login_attempts { uuid id PK; text key; timestamptz created_at }
   settings { text key PK; jsonb value }
+  app_settings { int id PK; text meta_app_id; text meta_config_id }
   api_keys { uuid id PK; text name; text prefix; text key_hash UK; timestamptz revoked_at }
   instagram_accounts { uuid id PK; text ig_user_id UK; text username; text access_token_enc; timestamptz token_expires_at; bool is_active }
   campaigns { uuid id PK; uuid account_id FK; text name; text media_id; text[] media_ids; bool is_active; timestamptz starts_at; timestamptz ends_at }
@@ -62,8 +63,9 @@ date window, active) -> match rule by priority -> once-per-user check -> public 
 **n8n mode**: n8n receives Meta's webhook, then `POST /api/v1/n8n/events` with `Authorization: Bearer <api key>`,
 the original raw body and original `X-Hub-Signature-256`. Same engine, `source = n8n`.
 
-**Token refresh**: `GET /api/cron/refresh-tokens` (Bearer `CRON_SECRET`) runs daily and refreshes
-tokens nearing expiry. **Health**: `GET /api/health`.
+**Unified Login OAuth**: the browser is sent to `https://www.facebook.com/dialog/oauth` with the Meta App ID, `config_id`, exact redirect URI, CSRF `state`, and no explicit `scope` parameter (permissions are stored in the configuration). The callback exchanges the code at `graph.facebook.com`, reads `/me/assigned_instagram_accounts`, requires exactly one shared Instagram asset, and stores the Business Integration System User token encrypted.
+
+**Token refresh**: `GET /api/cron/refresh-tokens` (Bearer `CRON_SECRET`) runs daily. Non-expiring Unified Login tokens are left untouched; expiring tokens are refreshed when fewer than 15 days remain. **Health**: `GET /api/health`.
 
 **Recovery**: read paths retry once on connection-level errors (`withDbRetry`); error boundaries
 re-render once, and reload once on version skew after a deploy (`src/lib/error-recovery.ts`,
@@ -92,6 +94,6 @@ ignored, so a comment is never replied to twice.
   with `src/lib/csv.ts` (RFC 4180, UTF-8 BOM, formula-injection guard, 50,000-row cap, dates in the configured time zone).
 - Secrets encrypted (AES-256-GCM, key from HKDF(`APP_SECRET`)); never sent to the browser or logged.
 - RLS enabled, no policies: the Supabase REST anon key sees nothing. The app uses a server-side Postgres connection.
-- Outbound hosts: `graph.instagram.com` / `api.instagram.com` (Instagram API) and the fixed
+- Outbound hosts: `graph.facebook.com` (Unified Login OAuth token exchange and Instagram Graph API) and the fixed
   `api.github.com` releases URL for the Settings → About update check (cached 6 h, fails closed).
 - See [SECURITY.md](../SECURITY.md).

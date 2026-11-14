@@ -47,7 +47,7 @@ into n8n.
 - **Check for missed comments**: re-read the last 7 days of a campaign post's comments from Instagram and list any whose webhook never arrived (nothing is sent automatically).
 - **Kill switch** to pause all sending instantly.
 - **Encrypted secrets** (AES-256-GCM): tokens and the Meta app secret are never stored in plain text.
-- **Automatic token refresh** (daily cron), so the 60-day Instagram token never expires on you.
+- **Unified Login token lifecycle**: the daily cron refreshes expiring Business Integration System User tokens; non-expiring tokens are left untouched.
 - **Optional n8n relay** if you want to extend flows with your own nodes.
 - Accessible, responsive UI with dark mode ([ACCESSIBILITY.md](ACCESSIBILITY.md)).
 
@@ -167,7 +167,7 @@ More in [docs/architecture.md](docs/architecture.md).
 
 ## Configuration
 
-Only two variables are required; everything Instagram-related is set in the UI.
+Only two variables are required. Meta App ID and Unified Login Config ID are entered in the UI; the Meta App Secret can be saved encrypted there or supplied through the optional server-only `META_APP_SECRET` variable.
 
 | Variable                                            | Required | Description                                                                                                       |
 | --------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -184,9 +184,9 @@ Full reference: [docs/configuration.md](docs/configuration.md).
 
 **Is it really free and unlimited?** The software has no fees or contact limits. Limits come from Meta (rate limits, one private reply per comment within 7 days) and your hosting tier. See [Is it free & unlimited?](docs/meta-setup.md#is-it-free-and-unlimited).
 
-**Do I need a Facebook Page?** No. It uses _Instagram API with Instagram Login_ and a professional (Business or Creator) account.
+**Do I need a Facebook Page?** No. Unified Login uses a Meta Business Portfolio and an Instagram Professional (Business or Creator) account; a Facebook Page is not required for this flow.
 
-**Do I need Meta App Review?** For your own account, Standard Access is the intended path. Whether public comments reach the webhook in Live mode without Advanced Access is not confirmed by Meta's docs, so test it. See [meta-setup.md](docs/meta-setup.md#standard-vs-advanced-access---do-i-need-app-review).
+**Do I need Meta App Review?** It depends on the permissions, app mode, and whether people outside your app roles will connect. Check the access level shown in your Meta dashboard and follow [the Unified Login guide](docs/meta-setup.md#part-8---development-mode-live-mode-and-app-review).
 
 **Can I send a second DM?** Not with Private Replies: one per comment, within 7 days. Follow-ups are only possible after the user replies (24-hour window).
 

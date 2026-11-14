@@ -146,43 +146,44 @@ In the Instagram app, with the account that should reply:
 2. **Settings → Messages and story replies → Message controls → Connected tools → Allow access to
    messages: ON**. Without this every DM fails.
 
-## 7. Create the Meta app
+## 7. Create the Meta app and Unified Login configuration
 
-Short version below; screenshots-level detail and explanations are in [meta-setup.md](meta-setup.md).
+Short version below; the full guide is in [meta-setup.md](meta-setup.md).
 
-1. <https://developers.facebook.com/apps> → **Create app**. Any name.
-2. Use case: **Manage messaging & content on Instagram** (if not listed: **Other → Business**).
-3. In the app dashboard open **Instagram → API setup with Instagram login**. (Newer dashboards:
-   **Use cases → Manage messaging & content on Instagram → Customize → API setup with Instagram login**.)
-4. Copy the **Instagram app ID** and **Instagram app secret** shown on that page.
-5. In your app: **Settings → Instagram → Meta app** → paste them into **Instagram App ID** and
-   **Instagram App Secret** → save. The secret shows "stored encrypted".
-6. Back in Meta, same page → **3. Set up Instagram business login → Business login settings →
-   OAuth redirect URIs**: add `https://<domain>/api/instagram/oauth/callback` exactly (copy it from
-   Settings → Instagram). Save.
-7. **App roles → Roles → Add people → Instagram Tester** → your Instagram username. Then accept the
-   invite in Instagram: **Settings → Website permissions → Apps and websites → Tester invites →
-   Accept** (on the web: instagram.com → Settings → Apps and websites).
+1. Open <https://developers.facebook.com/apps> and create a **Business** app with the **Manage messaging & content on Instagram** use case.
+2. Associate the app with the **Business Portfolio** that has access to the Instagram Professional account. Unified Login requires a Business Portfolio; a Facebook Page is not required for this flow.
+3. Open **Use cases → Manage messaging & content on Instagram → Customize → API setup with Unified Login**.
+4. Open **Facebook Login for Business → Configurations** and create a configuration:
+   - Login variation: **General**, if prompted.
+   - Token type: **System-user access token (SUAT)**.
+   - Business assets: share exactly **one Instagram Professional account** with this configuration. AutoDM currently supports one connected Instagram account.
+   - Permissions: `instagram_basic`, `instagram_manage_comments`, and `instagram_manage_messages`.
+   - Token expiry: choose **Never** if available, or an expiring option. AutoDM refreshes expiring tokens daily when fewer than 15 days remain.
+5. Save the configuration, select **Use this configuration** if prompted, and copy the **Configuration ID**.
+6. In Meta **App settings → Basic**, copy the general **App ID** and **App Secret**. Do not use the legacy Instagram-specific credentials.
+7. In AutoDM → **Settings → Instagram**, enter the **Meta App ID**, **Unified Login Config ID**, and **Meta App Secret**, then save. The secret is stored encrypted. You may instead set server-only `META_APP_SECRET`.
+8. Copy the OAuth redirect URI displayed in AutoDM Settings and add it exactly to the Unified Login configuration's redirect URI list (or Facebook Login for Business → Settings → Valid OAuth Redirect URIs). Save.
+9. The Meta account that authorizes AutoDM must have access to the selected Business Portfolio and Instagram account. In Development mode, add the authorizing person as an app role/tester if Meta requires it.
 
 ## 8. Connect Instagram
 
-1. App → **Settings → Instagram → Instagram account → Connect Instagram**.
-2. Log in and click **Allow** for all permissions.
-3. You come back to Settings with your username and picture. The token is stored encrypted and
-   refreshed daily by the cron job (it needs `CRON_SECRET`).
+1. AutoDM → **Settings → Instagram → Connect Instagram**.
+2. Sign in through Meta, choose the correct Business Portfolio, and share the one Instagram account selected in the configuration.
+3. Approve the requested permissions and return to AutoDM. The username should appear in Settings.
+
+AutoDM exchanges the authorization code, calls `/me/assigned_instagram_accounts`, and resolves the selected Instagram profile. If it finds zero or more than one account, it refuses to connect; fix the asset sharing so exactly one account is available, then reconnect. The access token is stored encrypted.
 
 ## 9. Connect the webhook
 
 This tells Meta where to send new comments.
 
-1. Meta → **Instagram → API setup with Instagram login → 2. Configure webhooks**.
-2. **Callback URL**: copy from app **Settings → Instagram → Webhook → Callback URL**
-   (`https://<domain>/api/webhooks/instagram`).
-3. **Verify token**: copy from the same card (**Copy verify token**).
-4. **Verify and save**. Then in the fields list, **Subscribe** to **`comments`**.
+1. Meta → **Use cases → Manage messaging & content on Instagram → Customize → API setup with Unified Login** (or the equivalent Instagram Webhooks setup page).
+2. **Callback URL**: copy from AutoDM **Settings → Instagram → Webhook → Callback URL** (`https://<domain>/api/webhooks/instagram`).
+3. **Verify token**: copy from the same card.
+4. Click **Verify and save**. Subscribe to **`comments`**. Also subscribe to **`messaging_postbacks`** if you use the follow-gate button.
+5. Return to AutoDM and check **Webhook diagnostics**. Account-level subscription should show as successful; use **Re-subscribe webhooks** if needed.
 
-The Webhook card in Settings changes from "No events yet" to **Receiving events** after the first
-comment arrives.
+The Webhook card in Settings changes from "No events yet" to **Receiving events** after the first comment arrives.
 
 ## 10. Create a campaign and a rule
 
@@ -214,7 +215,7 @@ provides both:
 2. **Settings → Instagram → Meta app review** lists the URLs. Paste the **Privacy Policy URL**
    (`/privacy`), **Terms of Service URL** (`/terms`) and **Data deletion instructions URL**
    (`/data-deletion`) into Meta → **App settings → Basic**, and the **Deauthorize callback URL** and **Data deletion request URL** into
-   **Instagram → API setup with Instagram login → Business login settings**.
+   **Instagram → API setup with Unified Login / Facebook Login for Business settings**.
 
 Steps and the honest state of what Meta requires:
 [meta-setup.md → Part 8](meta-setup.md#part-8---development-vs-live-mode-important).

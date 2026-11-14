@@ -497,7 +497,7 @@ function WebhookCard({
           </div>
         </div>
         <ol className="text-muted-foreground grid list-decimal gap-1.5 pl-5 text-sm marker:font-medium">
-          <li>In your Meta app open Instagram → API setup with Instagram login → Configure webhooks.</li>
+          <li>In your Meta app open Use cases → Manage messaging & content on Instagram → Customize → API setup with Unified Login → Configure webhooks.</li>
           <li>Paste the callback URL and verify token, then click “Verify and save”.</li>
           <li>
             Subscribe to the <code className="text-foreground">comments</code> field.

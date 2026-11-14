@@ -55,7 +55,7 @@ Meta's signature is checked on the exact original bytes.
 
 8. Double-click **Webhook POST (Meta events)** → tab **Production URL** → copy it. It looks like
    `https://n8n.example.com/webhook/instagram`. (Not the Test URL.)
-9. Meta dashboard → **Instagram → API setup with Instagram login → 2. Configure webhooks**:
+9. Meta dashboard → **Use cases → Manage messaging & content on Instagram → Customize → API setup with Unified Login → Configure webhooks**:
    - **Callback URL**: the n8n Production URL from step 8.
    - **Verify token**: the same token as before, from the app **Settings → Instagram → Webhook**.
    - **Verify and save**. Check `comments` is still subscribed.
