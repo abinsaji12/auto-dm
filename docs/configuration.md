@@ -32,7 +32,7 @@ Without `APP_URL` (and outside Vercel) canonical links and social-card URLs cann
 
 ## In-app settings (Settings page)
 
-Stored in the `settings` table; secret ones are encrypted. Defined in `src/server/settings.ts`.
+Meta App ID and Unified Login Config ID are stored in the `app_settings` table. Other values are stored in the `settings` table; secret settings are encrypted. Defined in `src/server/settings.ts`.
 
 | Key                        | Secret | Description                                                                                                                                                         |
 | -------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
