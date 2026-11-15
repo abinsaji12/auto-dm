@@ -1,14 +1,11 @@
 /**
- * Builds the browser redirect for Meta Facebook Login for Business Unified Login.
+ * Builds the browser redirect for Meta's Instagram Unified Login configuration.
  *
- * New Instagram messaging apps use this Meta-hosted dialog even when the person
- * authenticates with Instagram. The explicit prompt asks Meta to show the
- * Instagram/Facebook sign-in choices instead of silently reusing a Facebook session.
- *
- * For System-user access token configurations, Meta replaces the legacy `scope`
- * parameter with `config_id`. When requesting an authorization code, the
- * `override_default_response_type=true` flag is required so the configuration's
- * code response is honored.
+ * New Instagram messaging apps use Facebook Login for Business with a config_id.
+ * Meta hosts this dialog on facebook.com; the user can choose "Continue with Instagram"
+ * and authenticate with Instagram credentials. Do not add a legacy scope list or
+ * generic OAuth prompt parameter: permissions and the login experience are defined
+ * by the saved Business Login configuration.
  */
 export interface UnifiedLoginAuthorizeInput {
   appId: string;
@@ -24,7 +21,6 @@ export function buildUnifiedLoginAuthorizeUrl(input: UnifiedLoginAuthorizeInput)
   url.searchParams.set("redirect_uri", input.redirectUri);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("override_default_response_type", "true");
-  url.searchParams.set("prompt", "login");
   url.searchParams.set("state", input.state);
   return url.toString();
 }
