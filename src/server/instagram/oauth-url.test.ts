@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildUnifiedLoginAuthorizeUrl } from "./oauth-url";
 
 describe("buildUnifiedLoginAuthorizeUrl", () => {
-  it("uses Meta Unified Login and asks Meta to show the Instagram sign-in choice", () => {
+  it("builds the minimal Meta Unified Login authorization request", () => {
     const result = new URL(
       buildUnifiedLoginAuthorizeUrl({
         appId: "123456789012345",
@@ -21,8 +21,8 @@ describe("buildUnifiedLoginAuthorizeUrl", () => {
     );
     expect(result.searchParams.get("response_type")).toBe("code");
     expect(result.searchParams.get("override_default_response_type")).toBe("true");
-    expect(result.searchParams.get("prompt")).toBe("login");
     expect(result.searchParams.get("state")).toBe("csrf-state");
     expect(result.searchParams.has("scope")).toBe(false);
+    expect(result.searchParams.has("prompt")).toBe(false);
   });
 });
