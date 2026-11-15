@@ -278,7 +278,7 @@ function ConnectionCard({ account, configured }: { account: Account | null; conf
       <CardHeader>
         <CardTitle>Instagram account</CardTitle>
         <CardDescription>
-          A professional (Business or Creator) account. Token expiry is controlled by your Unified Login configuration; reconnect when it expires.
+          A professional (Business or Creator) account. New Meta apps use a Meta-hosted sign-in window; choose Continue with Instagram to authenticate with your Instagram credentials. Token expiry is controlled by your Unified Login configuration.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -362,7 +362,7 @@ function ConnectionCard({ account, configured }: { account: Account | null; conf
               <p className="font-medium">Not connected</p>
               <p className="text-muted-foreground text-sm">
                 {configured
-                  ? "You'll be sent to Meta to authorize access and select the shared Instagram account."
+                  ? "Meta's sign-in window will open. Choose Continue with Instagram (not Continue with Facebook), then sign in with your Instagram account and authorize access."
                   : "Save the Meta App ID, Unified Login Config ID and App Secret first."}
               </p>
             </div>
