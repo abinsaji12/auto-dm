@@ -101,7 +101,6 @@ The redirect URI must match exactly: HTTPS in production, same hostname, same pa
 3. Click **Connect Instagram**. Meta's authorization window opens on a Facebook-hosted domain because this new-app integration must use Unified Login.
 4. In the Meta window, choose **Continue with Instagram** (not **Continue with Facebook**) and sign in using the Instagram username/password for the account you want to connect. The app sends `prompt=login` to ask Meta to show the Instagram/Facebook sign-in choices even when a Facebook session already exists.
 5. After Instagram sign-in, choose the correct Business Portfolio and share the single Instagram Professional account configured for AutoDM, then approve the requested access.
-5. Approve the requested access and return to AutoDM.
 
 AutoDM exchanges the authorization code on the server, requests the Instagram assets assigned to the authorized business user, and resolves the Instagram account profile. The token is encrypted in the database. If the dialog succeeds but AutoDM reports **No Instagram account** or **Multiple Instagram accounts**, edit the configuration and asset sharing, then connect again.
 
