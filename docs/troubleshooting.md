@@ -97,8 +97,8 @@ verification handshake, and the result of the last webhook subscription.
 | What you see                                                        | Meaning and fix                                                                                                                                                                                     |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Activity row **Skipped · Own comment**                              | You commented with the connected account. Its comments are never answered (loop protection). Test from a **second account**.                                                                        |
-| **No row in Activity** and **no webhook deliveries** in diagnostics | Meta isn't sending anything. Usually the app is in **Development mode** and the commenter isn't an accepted **Instagram Tester**, or `comments` isn't subscribed. Work through the checklist below. |
-| Deliveries with **Signature invalid**                               | The App Secret in Settings is not the **Instagram App Secret** of the app that sends the webhook (Instagram → API setup with Instagram login, not App settings → Basic). Save the right one.        |
+| **No row in Activity** and **no webhook deliveries** in diagnostics | Meta isn't sending anything. Usually the app is in **Development mode** and the authorizing/test accounts do not have the roles or business-asset access Meta requires, or `comments` isn't subscribed. Work through the checklist below. |
+| Deliveries with **Signature invalid**                               | The Meta App Secret in Settings does not belong to the same Meta app that sends the webhook. Use the general App Secret from **App settings → Basic** (not an old Instagram-specific secret).        |
 | Deliveries with **Not configured**                                  | No App Secret is saved yet. Add it in Settings → Instagram → Meta app.                                                                                                                              |
 | Deliveries **Accepted** but **Account: Other account**              | Meta sent the comment for a different Instagram account id (the dashboard's **Test** button sends a sample like this). Reconnect the account the post belongs to.                                   |
 | Last verification **Verify failed**                                 | The verify token in Meta doesn't match the one in Settings. Copy it again and click **Verify and save**.                                                                                            |
@@ -112,11 +112,9 @@ Checklist when nothing arrives:
 3. The `comments` field is subscribed in the Meta dashboard, and **Account subscription** says
    _Subscribed_ (use **Re-subscribe webhooks** if not).
 4. You comment from a **second account**, never the connected one.
-5. In **Development mode** that second account is added under **App roles → Roles → Instagram
-   Testers** and has **accepted** the invite in Instagram (Settings → Apps and websites → Tester
-   invites). Without that, Meta sends nothing.
+5. In **Development mode**, make sure the authorizing Meta user has an app role and access to the Business Portfolio and the Instagram asset shared with the Unified Login configuration. Accept any tester invitation that Meta explicitly presents.
 6. To answer everyone else, the app must be **Live**, with Advanced Access for the comments
-   permission ([meta-setup](meta-setup.md#part-8---development-vs-live-mode-important)).
+   permission ([meta-setup](meta-setup.md#part-8---development-mode-live-mode-and-app-review)).
 7. The connected account is **public** and a Business or Creator account.
 
 ## A comment matched the keyword but got no reply or DM
@@ -162,8 +160,8 @@ Group by `media_id` to spot a second id for the same reel: `select media_id, ski
 
 ## Webhook does not fire (no rows in Activity)
 
-1. **App mode**: in Development mode only app-role users trigger webhooks. Switch to **Live** ([meta-setup](meta-setup.md#part-8---development-vs-live-mode-important)).
-2. **Tester**: commenting account must be a tester (in Development) and your IG account must have accepted the invite.
+1. **App mode**: in Development mode only app-role users trigger webhooks. Switch to **Live** ([meta-setup](meta-setup.md#part-8---development-mode-live-mode-and-app-review)).
+2. **Development-mode access**: the Meta user authorizing AutoDM must have an app role and access to the Business Portfolio and the Instagram asset shared with the configuration. Any tester invitation shown by Meta must be accepted.
 3. **Subscription**: `comments` field subscribed in the dashboard **and** the account subscribed (reconnect Instagram).
 4. **Advanced Access / App Review**: if Live mode still delivers nothing for public commenters, request Advanced Access for the comments permission (⚠ unconfirmed requirement).
 5. The post's account must be a professional account; own comments never trigger replies.
@@ -174,19 +172,31 @@ Group by `media_id` to spot a second id for the same reel: `select media_id, ski
 
 Callback URL must be HTTPS and public, exactly `{APP_URL}/api/webhooks/instagram`; verify token must equal the one in Settings. Make sure `APP_SECRET` hasn't changed (the verify token is encrypted with it).
 
+## Unified Login authorization errors
+
+| Error | Likely cause and fix |
+| --- | --- |
+| **Invalid platform app** | Check that AutoDM has the general Meta App ID from **App settings → Basic**, not the legacy Instagram-specific ID. Confirm the app is associated with the correct Business Portfolio and the Unified Login Config ID belongs to this app. |
+| **Invalid Scopes** | Unified Login takes permissions from the configuration. Do not send or configure the old `instagram_business_*` permission names. Edit the configuration and include `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`, and `business_management`. |
+| **No Instagram professional account is shared** | The authorizing Meta user or system user cannot see an Instagram asset in the selected Business Portfolio. Assign the professional account to the portfolio, include `business_management` in the Unified Login configuration, and reconnect. |
+| **More than one Instagram account is shared** | AutoDM supports one connected account per installation. Edit the configuration so exactly one Instagram account is shared, then reconnect. |
+| **OAuth redirect mismatch** | Copy the redirect URI from AutoDM → **Settings → Instagram** and register it exactly in the Unified Login configuration / Facebook Login for Business valid redirect URI list. Check HTTPS, hostname, path, and trailing slash. |
+
 ## 401 / invalid signature
 
-The Meta **App Secret** saved in Settings must belong to the same app that sends the webhook (use the Instagram app secret if it differs). Behind n8n, forward the raw body and original `X-Hub-Signature-256` unchanged.
+The **Meta App Secret** saved in Settings must belong to the same Meta app that sends the webhook. Copy it from **App settings → Basic**. Behind n8n, forward the raw body and original `X-Hub-Signature-256` unchanged.
+
+The browser-side authorization must start on `https://www.facebook.com/dialog/oauth` with the Meta App ID, `config_id`, `response_type=code`, and `override_default_response_type=true`. If your browser is sent to `https://www.instagram.com/oauth/authorize`, you are still running the legacy Instagram Login build: open the Unified Login preview/production deployment instead of an older deployment.
 
 ## Token expired / "Invalid OAuth access token"
 
-Tokens last ~60 days and are refreshed daily by cron. Check `CRON_SECRET` and the cron run in Vercel. Fix: **Settings -> Instagram -> Connect Instagram** again.
+The token lifetime is controlled by the Unified Login configuration. Non-expiring tokens are not refreshed. If you chose an expiring token, the daily cron attempts a refresh when fewer than 15 days remain; check `CRON_SECRET`, the Vercel cron invocation, and the Meta App ID/Secret. If Meta has already revoked or expired the token, reconnect from **Settings → Instagram**.
 
 ## DM not delivered
 
 - Private replies: **one per comment**, within **7 days**; a second attempt for the same comment fails.
 - User must not have blocked messages; the commenter's account may restrict message requests.
-- Missing `instagram_business_manage_messages` permission: reconnect and accept all permissions.
+- Missing `instagram_manage_messages` permission: reconnect and accept all permissions.
 - Message over 1000 characters or invalid button URL: shorten; check the error in Activity.
 - Rate limited (~750 private replies/hour/account, ⚠ verify): retry later.
 

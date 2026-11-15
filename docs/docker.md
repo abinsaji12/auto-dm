@@ -71,7 +71,7 @@ Consider binding the app port to localhost only (`"127.0.0.1:3000:3000"`) when a
 
 ## Cron sidecar
 
-On Vercel a cron job refreshes the 60-day Instagram token. In Docker the `cron` service (Alpine + crond)
+On Vercel the daily cron refreshes expiring Unified Login tokens when fewer than 15 days remain (non-expiring tokens are left alone). In Docker the `cron` service (Alpine + crond)
 calls `/api/cron/refresh-tokens` daily at 03:17 with `Authorization: Bearer $CRON_SECRET`. Keep `CRON_SECRET`
 set, otherwise the route refuses the call. Check it with `docker compose logs cron`.
 

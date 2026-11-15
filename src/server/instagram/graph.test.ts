@@ -58,7 +58,7 @@ describe("graphRequest", () => {
     expect((err as GraphApiError).toSafeString()).toContain("code=100");
   });
 
-  it("parses api.instagram.com OAuth errors", async () => {
+  it("parses Meta Graph OAuth errors", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
@@ -66,7 +66,7 @@ describe("graphRequest", () => {
       ),
     );
     await expect(
-      graphRequest({ path: "https://api.instagram.com/oauth/access_token", schema: z.unknown() }),
+      graphRequest({ path: "https://graph.facebook.com/v20.0/oauth/access_token", schema: z.unknown() }),
     ).rejects.toMatchObject({
       message: "Invalid code",
       code: 400,
@@ -126,7 +126,7 @@ describe("graphRequest", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
-        throw new TypeError("fetch failed https://graph.instagram.com/me?access_token=SECRET");
+        throw new TypeError("fetch failed https://graph.facebook.com/v25.0/me?access_token=SECRET");
       }),
     );
     const err = (await graphRequest({

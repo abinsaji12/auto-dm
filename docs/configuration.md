@@ -11,6 +11,7 @@
 | `ADMIN_DEFAULT_USERNAME` | no       | `admin`                      | First run only                                                                        |
 | `ADMIN_DEFAULT_PASSWORD` | no       | `changeme123`                | Forced change at first login                                                          |
 | `CRON_SECRET`            | no       | -                            | Protects `/api/cron/*`                                                                |
+| `META_APP_SECRET`        | no       | -                            | Optional server-only Meta App Secret; takes precedence over the encrypted Settings fallback |
 | `LOG_LEVEL`              | no       | `info` (`debug` in dev)      | `debug`, `info`, `warn` or `error`                                                    |
 
 Generate secrets: `openssl rand -base64 48`.
@@ -31,12 +32,13 @@ Without `APP_URL` (and outside Vercel) canonical links and social-card URLs cann
 
 ## In-app settings (Settings page)
 
-Stored in the `settings` table; secret ones are encrypted. Defined in `src/server/settings.ts`.
+Meta App ID and Unified Login Config ID are stored in the `app_settings` table. Other values are stored in the `settings` table; secret settings are encrypted. Defined in `src/server/settings.ts`.
 
 | Key                        | Secret | Description                                                                                                                                                         |
 | -------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `meta.appId`               | no     | Numeric Meta/Instagram app id                                                                                                                                       |
-| `meta.appSecret`           | yes    | Meta app secret                                                                                                                                                     |
+| `app_settings.meta_app_id` | no     | General Meta App ID from **App settings → Basic**. Used with Unified Login.                              |
+| `app_settings.meta_config_id` | no   | Facebook Login for Business Unified Login Configuration ID (`config_id`).                              |
+| `meta.appSecret`           | yes    | Meta App Secret from **App settings → Basic**; encrypted fallback when `META_APP_SECRET` is not set.     |
 | `webhook.verifyToken`      | yes    | Auto-generated; paste into Meta webhook config                                                                                                                      |
 | `webhook.subscription`     | no     | Last webhook subscription result (`ok`, time, `connect`/`manual`, subscribed fields, error). Written on Connect and by Settings → Instagram → Re-subscribe webhooks |
 | `processing.mode`          | no     | `webhook` (default) or `n8n`                                                                                                                                        |

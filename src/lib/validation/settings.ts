@@ -6,6 +6,10 @@ export const metaAppSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{5,25}$/, "The App ID is a number (5–25 digits)"),
+  configId: z
+    .string()
+    .trim()
+    .regex(/^\d{5,25}$/, "The Unified Login Config ID is a number (5–25 digits)"),
   /** Write-only: blank keeps the stored secret. */
   appSecret: z
     .string()

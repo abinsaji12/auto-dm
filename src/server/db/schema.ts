@@ -56,6 +56,13 @@ export const settings = pgTable("settings", {
   ...timestamps,
 });
 
+/** Singleton configuration for Meta's Instagram Unified Login flow. */
+export const appSettings = pgTable("app_settings", {
+  id: integer("id").primaryKey().default(1),
+  metaAppId: text("meta_app_id").notNull().default(""),
+  metaConfigId: text("meta_config_id").notNull().default(""),
+});
+
 /** API keys for machine clients (n8n). Looked up by `prefix`, verified against an argon2id `key_hash`. */
 export const apiKeys = pgTable("api_keys", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -2,14 +2,11 @@ import "server-only";
 import { and, desc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { decrypt, encrypt } from "@/server/crypto";
+import { getMetaAppSecret, getMetaAppSettings } from "@/server/settings";
 import { db, retryable } from "@/server/db/client";
 import { instagramAccounts, type InstagramAccount } from "@/server/db/schema";
-import { IG_REFRESH_TOKEN_URL } from "./constants";
+import { UNIFIED_LOGIN_TOKEN_URL } from "./constants";
 import { graphId, graphRequest } from "./graph";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-/** Refresh when fewer than this many days are left (long-lived tokens last 60 days). */
-export const REFRESH_THRESHOLD_DAYS = 15;
 
 /** The connected (active) Instagram account, or `null` when none is connected. */
 export const getActiveAccount = retryable(
@@ -25,7 +22,7 @@ export const getActiveAccount = retryable(
   },
 );
 
-/** Decrypts the account's long-lived access token. Throws if the account was disconnected. */
+/** Decrypts the account's Meta access token. Throws if the account was disconnected. */
 export function getAccessToken(account: Pick<InstagramAccount, "accessTokenEnc">): string {
   if (!account.accessTokenEnc) throw new Error("Instagram account is not connected (no access token)");
   return decrypt(account.accessTokenEnc);
@@ -41,7 +38,7 @@ export interface UpsertAccountInput {
 }
 
 /**
- * Stores (or re-activates) an account with an encrypted token and makes it the only active one.
+ * Stores (or re-activates) an account with an encrypted Meta token and makes it the only active one.
  * Existing campaigns stay attached because the row is upserted by `ig_user_id`.
  */
 export async function upsertAccount(input: UpsertAccountInput): Promise<InstagramAccount> {
@@ -81,7 +78,7 @@ export async function disconnectAccount(): Promise<void> {
   try {
     await graphRequest({
       method: "DELETE",
-      path: "/me/subscribed_apps",
+      path: `/${encodeURIComponent(account.igUserId)}/subscribed_apps`,
       accessToken: getAccessToken(account),
       schema: z.unknown(),
       retries: 0,
@@ -143,7 +140,7 @@ export async function listMedia(opts: { limit?: number; after?: string | null } 
   if (!account) throw new Error("No Instagram account connected");
   const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 24), 1), 50);
   const page = await graphRequest({
-    path: "/me/media",
+    path: `/${encodeURIComponent(account.igUserId)}/media`,
     accessToken: getAccessToken(account),
     query: {
       fields: "id,caption,media_type,media_product_type,media_url,permalink,thumbnail_url,timestamp",
@@ -179,9 +176,13 @@ export interface RefreshResult {
   expiresAt: Date | null;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Refresh expiring Business Integration System User tokens when fewer than 15 days remain. */
+export const REFRESH_THRESHOLD_DAYS = 15;
+
 /**
- * Refreshes the long-lived token when fewer than {@link REFRESH_THRESHOLD_DAYS} days remain (or
- * the expiry is unknown, or `force`). Meta only refreshes tokens that are >= 24h old.
+ * Refreshes an expiring Unified Login system-user token through Meta's OAuth token exchange.
+ * Configurations that issue non-expiring tokens have no expiry and are left untouched.
  */
 export async function refreshTokenIfNeeded(
   account: InstagramAccount,
@@ -189,19 +190,43 @@ export async function refreshTokenIfNeeded(
 ): Promise<RefreshResult> {
   const now = opts.now ?? new Date();
   const expiresAt = account.tokenExpiresAt;
-  const due = !expiresAt || expiresAt.getTime() - now.getTime() < REFRESH_THRESHOLD_DAYS * DAY_MS;
+  if (!expiresAt) return { refreshed: false, expiresAt: null };
+
+  const due = expiresAt.getTime() - now.getTime() < REFRESH_THRESHOLD_DAYS * DAY_MS;
   if (!opts.force && !due) return { refreshed: false, expiresAt };
 
-  const res = await graphRequest({
-    path: IG_REFRESH_TOKEN_URL,
-    query: { grant_type: "ig_refresh_token" },
-    accessToken: getAccessToken(account),
+  const [metaSettings, appSecret] = await Promise.all([getMetaAppSettings(), getMetaAppSecret()]);
+  const appId = metaSettings.metaAppId;
+  if (!appId || !appSecret) {
+    throw new Error("Meta App ID and App Secret are required to refresh the Unified Login token");
+  }
+
+  const currentToken = getAccessToken(account);
+  const refreshed = await graphRequest({
+    path: UNIFIED_LOGIN_TOKEN_URL,
+    query: {
+      grant_type: "fb_exchange_token",
+      client_id: appId,
+      client_secret: appSecret,
+      fb_exchange_token: currentToken,
+      set_token_expires_in_60_days: "true",
+    },
     schema: tokenResponseSchema,
+    retries: 0,
   });
-  const newExpiresAt = res.expires_in ? new Date(now.getTime() + res.expires_in * 1000) : null;
+  const nextExpiry =
+    typeof refreshed.expires_in === "number" && refreshed.expires_in > 0
+      ? new Date(now.getTime() + refreshed.expires_in * 1000)
+      : null;
+
   await db
     .update(instagramAccounts)
-    .set({ accessTokenEnc: encrypt(res.access_token), tokenExpiresAt: newExpiresAt, tokenRefreshedAt: now })
+    .set({
+      accessTokenEnc: encrypt(refreshed.access_token),
+      tokenExpiresAt: nextExpiry,
+      tokenRefreshedAt: now,
+    })
     .where(eq(instagramAccounts.id, account.id));
-  return { refreshed: true, expiresAt: newExpiresAt };
+
+  return { refreshed: true, expiresAt: nextExpiry };
 }

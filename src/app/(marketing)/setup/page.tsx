@@ -118,10 +118,10 @@ const PHASES: readonly Phase[] = [
         where: "developers.facebook.com",
         body: (
           <>
-            Create a <strong>Business</strong> app and add the <strong>Instagram</strong> product (API setup
-            with Instagram login). Copy the Instagram app ID and secret into AutoDM under{" "}
-            <strong>Settings → Instagram</strong>, and add the OAuth redirect URI shown there to Meta&apos;s{" "}
-            <strong>Business login settings</strong>, character for character.
+            Create a <strong>Business</strong> app with the <strong>Manage messaging &amp; content on Instagram</strong> use case and associate it with the Business Portfolio that has access to your Instagram account. Create a{" "}
+            <strong>Facebook Login for Business Unified Login configuration</strong> with a System-user access token, exactly one Instagram account, and the permissions{" "}
+            <code>instagram_basic</code>, <code>instagram_manage_comments</code>, and <code>instagram_manage_messages</code>. Copy the general Meta App ID and App Secret from{" "}
+            <strong>App settings → Basic</strong> plus the configuration ID into AutoDM under <strong>Settings → Instagram</strong>, then register the exact OAuth redirect URI shown there.
           </>
         ),
         done: "App ID and secret saved; the secret shows “stored encrypted”.",

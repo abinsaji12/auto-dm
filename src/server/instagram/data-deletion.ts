@@ -8,7 +8,7 @@ import {
 import { randomToken } from "@/server/crypto";
 import { db } from "@/server/db/client";
 import { dataDeletionRequests, deliveries, instagramAccounts } from "@/server/db/schema";
-import { getSetting } from "@/server/settings";
+import { getMetaAppSecret } from "@/server/settings";
 import { readRawBody } from "./inbound";
 import { parseSignedRequest, type SignedRequest } from "./signed-request";
 
@@ -29,7 +29,7 @@ export async function readSignedRequest(req: Request): Promise<SignedRequestResu
   if (raw === null) return { ok: false, reason: "body_too_large" };
   const signed = new URLSearchParams(raw).get("signed_request");
   if (!signed) return { ok: false, reason: "missing_field" };
-  const appSecret = await getSetting("meta.appSecret");
+  const appSecret = await getMetaAppSecret();
   if (!appSecret) return { ok: false, reason: "not_configured" };
   const request = parseSignedRequest(signed, appSecret);
   return request ? { ok: true, request } : { ok: false, reason: "invalid_signed_request" };

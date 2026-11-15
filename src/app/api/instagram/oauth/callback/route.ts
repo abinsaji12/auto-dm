@@ -24,8 +24,8 @@ function back(query: string): NextResponse {
 }
 
 /**
- * Instagram redirects here with `?code&state` (or `?error=access_denied`). Verifies the CSRF
- * state, exchanges the code for a long-lived token, stores the account and subscribes webhooks.
+ * Meta redirects here with `?code&state` (or `?error=access_denied`). Verifies the CSRF state,
+ * exchanges the code using Unified Login, stores the selected Instagram account and subscribes webhooks.
  * Redirects to `/settings?tab=instagram&connected=1` (`&warning=subscribe_failed` if the webhook
  * subscription failed) or `/settings?tab=instagram&error=<code>`.
  */

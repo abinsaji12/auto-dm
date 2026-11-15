@@ -7,14 +7,14 @@ import { PageHeader } from "@/components/page-header";
 import { UrlTabs } from "@/components/url-tabs";
 import { FlashToast, type Flash } from "@/components/flash-toast";
 import { InstagramIcon } from "@/components/icons";
-import { appUrl } from "@/env";
+import { appUrl, env } from "@/env";
 import { requireUser } from "@/server/auth/guard";
 import { listApiKeys } from "@/server/api-keys";
 import { getActiveAccount } from "@/server/instagram/account";
 import { oauthRedirectUri } from "@/server/instagram/oauth";
 import { hasAnyDelivery } from "@/server/repos/deliveries";
 import { listWebhookRequests } from "@/server/repos/webhook-requests";
-import { getPublicSettings } from "@/server/settings";
+import { getMetaAppSettings, getPublicSettings } from "@/server/settings";
 import { AccountTab } from "./account-tab";
 import { InstagramTab } from "./instagram-tab";
 import { ProcessingTab } from "./processing-tab";
@@ -28,13 +28,16 @@ export const metadata: Metadata = { title: "Settings" };
 const TABS = ["account", "instagram", "processing", "n8n", "about"] as const;
 
 const OAUTH_ERRORS: Record<string, string> = {
-  missing_app_credentials: "Add your Meta App ID and App Secret first.",
+  missing_app_credentials:
+    "Add your Meta App ID and Unified Login Config ID, then set META_APP_SECRET on the server (or save the encrypted fallback).",
   access_denied: "Instagram authorization was cancelled.",
   invalid_state: "The connection request expired or was tampered with. Please try again.",
   missing_code: "Instagram didn't return an authorization code. Please try again.",
-  missing_permissions: "Some permissions were not granted. Allow all requested permissions and try again.",
   token_exchange_failed: "Couldn't exchange the authorization code. Check the App Secret and redirect URI.",
-  profile_fetch_failed: "Connected, but couldn't read the account profile. Please try again.",
+  profile_fetch_failed: "Couldn't read the Instagram account shared with this Unified Login configuration.",
+  no_instagram_account: "No Instagram professional account is shared with this Unified Login configuration.",
+  multiple_instagram_accounts:
+    "More than one Instagram account is shared. This app currently supports one connected account; share exactly one account and reconnect.",
 };
 
 export default async function SettingsPage({
@@ -43,9 +46,10 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string; connected?: string; error?: string; warning?: string }>;
 }) {
   const user = await requireUser();
-  const [sp, settings, account, apiKeys, anyDelivery, webhookRequests] = await Promise.all([
+  const [sp, settings, metaAppSettings, account, apiKeys, anyDelivery, webhookRequests] = await Promise.all([
     searchParams,
     getPublicSettings(),
+    getMetaAppSettings(),
     getActiveAccount(),
     listApiKeys(),
     hasAnyDelivery(),
@@ -111,8 +115,9 @@ export default async function SettingsPage({
         </TabsContent>
         <TabsContent value="instagram">
           <InstagramTab
-            appId={settings["meta.appId"].value ?? ""}
-            appSecretConfigured={settings["meta.appSecret"].configured}
+            appId={metaAppSettings.metaAppId}
+            configId={metaAppSettings.metaConfigId}
+            appSecretConfigured={settings["meta.appSecret"].configured || Boolean(env().META_APP_SECRET)}
             account={
               account
                 ? {
