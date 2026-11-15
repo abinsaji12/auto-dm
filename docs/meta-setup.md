@@ -98,9 +98,9 @@ The redirect URI must match exactly: HTTPS in production, same hostname, same pa
 
 1. Open AutoDM → **Settings → Instagram**.
 2. Confirm the Meta App ID, Config ID, and App Secret are marked as configured.
-3. Click **Connect Instagram**. Meta's authorization dialog opens.
-4. Sign in with the Meta account that has access to the Business Portfolio, choose the correct portfolio, and share the single Instagram account configured for AutoDM.
-5. Approve the requested access and return to AutoDM.
+3. Click **Connect Instagram**. Meta's authorization window opens on a Facebook-hosted domain because this new-app integration must use Unified Login.
+4. In the Meta window, choose **Continue with Instagram** (not **Continue with Facebook**) and sign in using the Instagram username/password for the account you want to connect. The app sends `prompt=login` to ask Meta to show the Instagram/Facebook sign-in choices even when a Facebook session already exists.
+5. After Instagram sign-in, choose the correct Business Portfolio and share the single Instagram Professional account configured for AutoDM, then approve the requested access.
 
 AutoDM exchanges the authorization code on the server, requests the Instagram assets assigned to the authorized business user, and resolves the Instagram account profile. The token is encrypted in the database. If the dialog succeeds but AutoDM reports **No Instagram account** or **Multiple Instagram accounts**, edit the configuration and asset sharing, then connect again.
 
@@ -168,7 +168,7 @@ The access-token lifetime comes from the Unified Login configuration:
 - **Expiring configuration:** AutoDM stores the returned expiry. Its daily cron refreshes the token when fewer than 15 days remain, using the Meta app credentials. Configure `CRON_SECRET` and make sure the cron endpoint runs.
 - If an expiring token is already expired or the refresh fails, reconnect Instagram from **Settings → Instagram**.
 
-The Unified Login Graph API calls use `graph.facebook.com`. This is not the old Instagram Login flow that used `graph.instagram.com` and the separate 60-day Instagram User token-refresh endpoint.
+The browser authorization window is hosted at `facebook.com` because Meta requires Unified Login for newly created Instagram messaging apps. This does not mean you must authenticate as a Facebook user: choose **Continue with Instagram** to use Instagram credentials. The app keeps the `config_id`-based Unified Login flow; it does not use the legacy `instagram.com/oauth/authorize` endpoint, which rejects new Meta apps. The Unified Login Graph API calls use `graph.facebook.com`; this differs from the old Instagram Login flow that used `graph.instagram.com` and the separate 60-day Instagram User token-refresh endpoint.
 
 ## Is it free and unlimited?
 
