@@ -11,10 +11,8 @@ export const GRAPH_API_VERSION = "v25.0";
 export const GRAPH_HOST = "https://graph.facebook.com";
 export const GRAPH_BASE_URL = `${GRAPH_HOST}/${GRAPH_API_VERSION}`;
 
-/** Authorization dialog (user-facing). */
-export const IG_AUTHORIZE_URL = "https://www.facebook.com/dialog/oauth";
-/** Unified Login authorization-code exchange. */
-export const UNIFIED_LOGIN_TOKEN_URL = `${GRAPH_HOST}/v20.0/oauth/access_token`;
+/** Unified Login authorization-code exchange. Uses the same supported Graph API version as all Graph calls. */
+export const UNIFIED_LOGIN_TOKEN_URL = `${GRAPH_BASE_URL}/oauth/access_token`;
 
 /** Meta limit for Private Reply / DM text. */
 export const DM_MAX_CHARS = 1000;

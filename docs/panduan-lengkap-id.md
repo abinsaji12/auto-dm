@@ -185,7 +185,7 @@ Panduan ini menggunakan **Meta Unified Login** yang mewajibkan Facebook Login fo
    - Login variation: **General** (jika diminta).
    - Token type: **System-user access token (SUAT)**.
    - Business assets: bagikan tepat **satu akun Instagram Professional**. AutoDM saat ini hanya mendukung satu akun Instagram yang terhubung.
-   - Permissions: `instagram_basic`, `instagram_manage_comments`, dan `instagram_manage_messages`.
+   - Permissions: `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`, dan `business_management`.
    - Token expiry: pilih **Never** jika tersedia. Jika memilih token yang punya masa berlaku, AutoDM mencoba memperbaruinya lewat cron ketika sisa masa berlaku kurang dari 15 hari.
 6. Simpan konfigurasi, pilih **Use this configuration** jika diminta, lalu salin **Configuration ID**.
 7. Di Meta buka **App settings → Basic**, salin **Meta App ID** dan **Meta App Secret**. Jangan memakai kredensial Instagram khusus dari flow lama.
@@ -366,6 +366,7 @@ mengubah body request. Detail & troubleshooting: [n8n.md](n8n.md).
 - [ ] Login & password sudah diganti
 - [ ] IG Professional + "Allow access to messages" ON
 - [ ] Meta App ID + Meta App Secret + Unified Login Config ID tersimpan, redirect URI ditambahkan
+- [ ] Konfigurasi Unified Login juga memiliki permission `business_management`
 - [ ] Connect Instagram berhasil
 - [ ] Webhook verified + `comments` subscribed
 - [ ] Campaign + rule aktif, "Test a comment" cocok

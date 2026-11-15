@@ -51,12 +51,17 @@ The configuration controls which assets and permissions are shared. AutoDM reads
    | `instagram_basic` | Read the connected account's identity and media |
    | `instagram_manage_comments` | Read comments and publish public comment replies |
    | `instagram_manage_messages` | Send Instagram private replies / DMs |
+   | `business_management` | Allows the returned business integration token to discover the Instagram asset shared with the Business Portfolio. |
+
+   Add `business_management` to the same configuration as well. In some Meta dashboards it only appears after adding the **Facebook Login for Business** product to the app and editing the configuration there. A number of new Unified Login integrations receive an empty `/me/assigned_instagram_accounts` response without it. Meta may require the relevant access level for this permission and `public_profile`; follow the status in your App Review dashboard.
 
    Use these Unified Login permission names. Do not substitute the older Instagram Login names beginning with `instagram_business_`.
-6. Choose the token expiration supported by your configuration:
+6. Check the configuration includes `business_management` in addition to the three Instagram permissions above. This is used by AutoDM to enumerate the Instagram asset returned by the business authorization. Save and re-open the configuration once to ensure the permission persisted.
+
+7. Choose the token expiration supported by your configuration:
    - **Never** is the simplest option when available; AutoDM leaves non-expiring tokens alone.
    - If you choose an expiring token (for example, 60 days), AutoDM's daily cron attempts to refresh it when fewer than 15 days remain. The cron must be running and `CRON_SECRET` must be configured.
-7. Save the configuration, select **Use this configuration** if Meta shows that action, and copy its **Configuration ID**. This is the **Unified Login Config ID** you will enter in AutoDM.
+8. Save the configuration, select **Use this configuration** if Meta shows that action, and copy its **Configuration ID**. This is the **Unified Login Config ID** you will enter in AutoDM.
 
 ## Part 3 - Save the Meta app credentials in AutoDM
 
@@ -177,14 +182,14 @@ AutoDM has no per-contact or per-message fee. Meta API access, review requiremen
 - [ ] Meta app is associated with the correct Business Portfolio.
 - [ ] Facebook Login for Business configuration uses a **System-user access token**.
 - [ ] Exactly one Instagram account is shared with the configuration.
-- [ ] Configuration includes `instagram_basic`, `instagram_manage_comments`, and `instagram_manage_messages`.
+- [ ] Configuration includes `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`, and `business_management`.
 - [ ] Meta App ID + Unified Login Config ID + Meta App Secret are saved in AutoDM.
 - [ ] OAuth redirect URI from AutoDM is registered exactly in the configuration.
 - [ ] Connect Instagram succeeds and the correct username appears.
 - [ ] Webhook callback URL and verify token are saved in Meta; `comments` is subscribed.
 - [ ] `messaging_postbacks` is subscribed if you use the follow gate.
 - [ ] Public contact and Meta review URLs are configured before going Live.
-- [ ] Advanced Access/App Review is completed if Meta requires it for public access.
+- [ ] Advanced Access/App Review is completed if Meta requires it for public access or `business_management`.
 
 ## References
 

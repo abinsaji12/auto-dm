@@ -8,7 +8,8 @@ import type { SubscriptionStatus } from "@/lib/webhook-diagnostics";
 import { logger } from "@/server/log";
 import { getMetaAppSecret, getMetaAppSettings, setSetting } from "@/server/settings";
 import { tokenResponseSchema, upsertAccount } from "./account";
-import { IG_AUTHORIZE_URL, UNIFIED_LOGIN_TOKEN_URL } from "./constants";
+import { UNIFIED_LOGIN_TOKEN_URL } from "./constants";
+import { buildUnifiedLoginAuthorizeUrl } from "./oauth-url";
 import { GraphApiError, graphId, graphRequest, safeErrorMessage } from "./graph";
 
 const log = logger("oauth");
@@ -78,13 +79,12 @@ async function getAppCredentials(): Promise<{ appId: string; configId: string; a
 /** Builds the Meta Unified Login authorization URL. Scopes are selected by config_id. */
 export async function buildAuthorizeUrl(state: string): Promise<string> {
   const { appId, configId } = await getAppCredentials();
-  const url = new URL(IG_AUTHORIZE_URL);
-  url.searchParams.set("client_id", appId);
-  url.searchParams.set("config_id", configId);
-  url.searchParams.set("redirect_uri", oauthRedirectUri());
-  url.searchParams.set("response_type", "code");
-  url.searchParams.set("state", state);
-  return url.toString();
+  return buildUnifiedLoginAuthorizeUrl({
+    appId,
+    configId,
+    redirectUri: oauthRedirectUri(),
+    state,
+  });
 }
 
 /** Account assets the Unified Login system-user token can access. */

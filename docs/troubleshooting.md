@@ -177,14 +177,16 @@ Callback URL must be HTTPS and public, exactly `{APP_URL}/api/webhooks/instagram
 | Error | Likely cause and fix |
 | --- | --- |
 | **Invalid platform app** | Check that AutoDM has the general Meta App ID from **App settings → Basic**, not the legacy Instagram-specific ID. Confirm the app is associated with the correct Business Portfolio and the Unified Login Config ID belongs to this app. |
-| **Invalid Scopes** | Unified Login takes permissions from the configuration. Do not send or configure the old `instagram_business_*` permission names. Edit the configuration and include `instagram_basic`, `instagram_manage_comments`, and `instagram_manage_messages`. |
-| **No Instagram professional account is shared** | The authorizing Meta user or system user cannot see an Instagram asset in the selected Business Portfolio. Assign the professional account to the portfolio and share it with the configuration, then reconnect. |
+| **Invalid Scopes** | Unified Login takes permissions from the configuration. Do not send or configure the old `instagram_business_*` permission names. Edit the configuration and include `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`, and `business_management`. |
+| **No Instagram professional account is shared** | The authorizing Meta user or system user cannot see an Instagram asset in the selected Business Portfolio. Assign the professional account to the portfolio, include `business_management` in the Unified Login configuration, and reconnect. |
 | **More than one Instagram account is shared** | AutoDM supports one connected account per installation. Edit the configuration so exactly one Instagram account is shared, then reconnect. |
 | **OAuth redirect mismatch** | Copy the redirect URI from AutoDM → **Settings → Instagram** and register it exactly in the Unified Login configuration / Facebook Login for Business valid redirect URI list. Check HTTPS, hostname, path, and trailing slash. |
 
 ## 401 / invalid signature
 
 The **Meta App Secret** saved in Settings must belong to the same Meta app that sends the webhook. Copy it from **App settings → Basic**. Behind n8n, forward the raw body and original `X-Hub-Signature-256` unchanged.
+
+The browser-side authorization must start on `https://www.facebook.com/dialog/oauth` with the Meta App ID, `config_id`, `response_type=code`, and `override_default_response_type=true`. If your browser is sent to `https://www.instagram.com/oauth/authorize`, you are still running the legacy Instagram Login build: open the Unified Login preview/production deployment instead of an older deployment.
 
 ## Token expired / "Invalid OAuth access token"
 
